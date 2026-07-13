@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I AM - Classic Finder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Serif KR', serif;
+            color: #1e293b;
+            overflow-x: hidden;
+            transition: background-image 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .serif-title {
+            font-family: 'Cinzel', 'Noto Serif KR', serif;
+        }
+        /* 고급스러운 글래스모피즘 패널 - 투명도 조정으로 배경 시각화 보장 */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        /* 어두운 글래스 모달 */
+        .glass-panel-dark {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+        /* 아티스트 카드 호버 연출 */
+        .card-focus {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-focus:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            border-color: rgba(140, 109, 63, 0.4);
+            background: rgba(255, 255, 255, 0.75);
+        }
+        /* 미니 슬라이더 및 스크러버 스타일링 */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1e293b;
+            cursor: pointer;
+            border: 1.5px solid #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(140, 109, 63, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(140, 109, 63, 0.7);
+        }
+    </style>
+</head>
+<body id="dynamic-bg" class="relative pb-32 selection:bg-[#8c6d3f] selection:text-white">
+
+    <!-- 실제 인스턴트 오디오 재생을 위한 HTML5 네이티브 엘리먼트 -->
+    <audio id="native-audio" preload="auto" loop></audio>
+
+    <!-- 겹쳐지는 오버레이 필터로 텍스트 가독성 항시 최상 유지 -->
+    <div class="absolute inset-0 bg-slate-900/10 pointer-events-none z-0"></div>
+
+    <!-- 헤더 영역 (우상단 BGM 가로형 미니 일자 플레이어 완벽 탑재) -->
+    <header class="w-full py-3 px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-white/20 sticky top-0 z-40 bg-white/40 backdrop-blur-md shadow-sm">
+        
+        <!-- 로고 브랜딩 -->
+        <div class="flex items-center space-x-3 cursor-pointer z-10" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <span class="serif-title text-xl font-black tracking-wider text-slate-800 hover:scale-105 transition-transform duration-300">I AM</span>
+            <span class="text-[8px] tracking-[0.3em] uppercase text-slate-700 border-l border-slate-400 pl-2.5 font-semibold">Classic Finder</span>
+        </div>
+        
+        <!-- 우상단 미니 BGM 플레이어 위젯 (image_f3985a.png 복각) -->
+        <div class="flex items-center gap-3 bg-white/80 px-4 py-2 rounded-xl border border-white/50 shadow-md max-w-[340px] sm:max-w-[360px] w-full z-10 transition-all duration-300">
+            
+            <div class="flex-1 min-w-0">
+                <!-- 상단: 타이틀 및 시간 표시 -->
+                <div class="flex justify-between items-center mb-1">
+                    <div class="truncate mr-2 max-w-[140px]">
+                        <span id="player-title" class="text-[10px] font-bold text-slate-800 truncate block">음원 로딩 중...</span>
+                    </div>
+                    <div class="flex items-center space-x-1 text-[8px] text-slate-600 font-mono scale-95 origin-right">
+                        <span id="current-time">0:00</span>
+                        <span>/</span>
+                        <span id="remaining-time">-0:00</span>
+                    </div>
+                </div>
+
+                <!-- 중단: 타임라인 트랙 -->
+                <div class="relative w-full mb-2" id="scrub-container">
+                    <div class="w-full h-[3px] bg-black/10 rounded-full cursor-pointer relative" id="progress-bar-bg">
+                        <!-- 진행 경과 바 -->
+                        <div id="progress-bar-fill" class="absolute left-0 top-0 h-full bg-[#8c6d3f] rounded-full" style="width: 0%;"></div>
+                        <!-- 노브 포인터 -->
+                        <div id="progress-thumb" class="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full border border-[#8c6d3f] shadow cursor-grab active:cursor-grabbing transform -translate-x-1/2" style="left: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- 하단: 일렬 아이콘 컨트롤 (Loop - Plus - Prev - Play - Next - More - Shuffle) -->
+                <div class="flex justify-between items-center px-0.5">
+                    <!-- Repeat (한곡 반복) -->
+                    <button id="btn-repeat" onclick="toggleRepeat()" class="text-slate-400 hover:text-black transition-colors" title="한곡 반복">
+                        <i class="fa-solid fa-repeat text-[10px]"></i>
+                    </button>
+                    <!-- Favorite (+) -->
+                    <button id="btn-favorite" onclick="toggleFavorite()" class="text-slate-400 hover:text-red-500 transition-colors" title="선호곡 저장">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                    </button>
+                    <!-- Prev (이전곡) -->
+                    <button onclick="playPrevTrack()" class="text-slate-400 hover:text-black transition-colors" title="이전 곡">
+                        <i class="fa-solid fa-backward-step text-[10px]"></i>
+                    </button>
+                    <!-- Play/Pause (BGM 메인 스위치) -->
+                    <button id="btn-main-play" onclick="togglePlayState()" class="w-5 h-5 bg-slate-800 text-white rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow" title="재생/정지">
+                        <i id="play-icon" class="fa-solid fa-play ml-0.5 text-[8px]"></i>
+                    </button>
+                    <!-- Next (다음곡) -->
+                    <button onclick="playNextTrack()" class="text-slate-400 hover:text-black transition-colors" title="다음 곡">
+                        <i class="fa-solid fa-forward-step text-[10px]"></i>
+                    </button>
+                    <!-- More (...) -->
+                    <button onclick="shareCurrentTrack()" class="text-slate-400 hover:text-black transition-colors" title="곡 링크 복사">
+                        <i class="fa-solid fa-ellipsis text-[10px]"></i>
+                    </button>
+                    <!-- Shuffle (셔플) -->
+                    <button id="btn-shuffle" onclick="toggleShuffle()" class="text-[#8c6d3f] hover:text-black transition-colors" title="셔플 모드">
+                        <i class="fa-solid fa-shuffle text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 미니 슬라이더 볼륨 제어 -->
+            <div class="flex items-center space-x-1 border-l border-black/10 pl-2 self-end pb-1 h-5">
+                <i class="fa-solid fa-volume-low text-slate-500 text-[10px]"></i>
+                <input type="range" id="volume-slider" min="0" max="100" value="60" oninput="changeVolume(this.value)" class="w-10 accent-[#8c6d3f] bg-black/10 h-[1.5px] rounded-lg cursor-pointer">
+            </div>
+
+        </div>
+    </header>
+
+    <!-- 메인 비주얼 히어로 랜딩 구역 -->
+    <section class="max-w-7xl mx-auto px-6 pt-12 pb-6 text-center relative z-10">
+        <span class="text-[9px] uppercase tracking-[0.25em] text-[#8c6d3f] font-extrabold bg-white/70 border border-white/60 rounded-full px-5 py-2 inline-block mb-6 shadow-sm">
+            I AM: Classical Soundscape Finder
+        </span>
+        
+        <h1 class="serif-title text-3xl md:text-5xl font-extrabold tracking-tight text-slate-800 mb-6 leading-tight">
+            하루 끝에 닿는 명품 클래식,<br>
+            <span class="text-[#8c6d3f] bg-gradient-to-r from-[#8c6d3f] to-[#aa854f] bg-clip-text text-transparent">나만의 연주자</span>를 탐색해 보세요
+        </h1>
+        
+        <p class="max-w-xl mx-auto text-slate-700 text-xs md:text-sm leading-relaxed mb-6 bg-white/50 p-4 rounded-xl inline-block border border-white/60 shadow-sm">
+            피아노, 바이올린, 첼로, 목관 악기부터 웅장한 대편성 오케스트라까지.<br>
+            우상단 미니 BGM에 맞춰 <strong>자동으로 흩날리는 감성 배경 풍경</strong>과 함께<br>
+            당신의 마음을 가장 깊숙이 울릴 클래식 큐레이션을 편안히 감상해 보세요.
+        </p>
+
+        <!-- 나만의 최적 채널 매칭 팝업 트리거 -->
+        <div class="flex justify-center">
+            <button onclick="openTasteModal()" class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-[#8c6d3f] hover:to-[#aa854f] text-white px-5 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide text-xs flex items-center space-x-2 shadow-md">
+                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                <span>나에게 꼭 맞는 클래식 악기/채널 분석</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- 큐레이션 탐색 보드 (정렬 및 접기 기능 탑재) -->
+    <section class="max-w-5xl mx-auto px-6 py-8 relative z-10">
+        <div class="glass-panel p-6 rounded-2xl text-center mb-8 border-white/80">
+            <h2 class="serif-title text-lg font-bold text-slate-800 mb-1">Instrument Curations</h2>
+            <p class="text-xs text-slate-500 mb-6">원하는 악기 종류 버튼을 누르면 해당 부문의 정밀 아티스트가 펼쳐집니다.</p>
+            
+            <!-- 악기 동적 탭 필터 -->
+            <div class="flex flex-wrap justify-center gap-2 items-center">
+                <button onclick="filterCategory('keyboard', this)" class="category-btn bg-[#8c6d3f] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border border-[#8c6d3f] shadow-md">
+                    🎹 건반악기
+                </button>
+                <button onclick="filterCategory('strings', this)" class="category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm">
+                    🎻 현악기
+                </button>
+                <button onclick="filterCategory('woodwinds', this)" class="category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm">
+                    🎺 관악기
+                </button>
+                <button onclick="filterCategory('percussion', this)" class="category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm">
+                    🥁 타악기
+                </button>
+                <button onclick="filterCategory('orchestra', this)" class="category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm">
+                    🎼 오케스트라
+                </button>
+                <button onclick="filterCategory('all', this)" class="category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm">
+                    ✨ 전체 모아보기
+                </button>
+                
+                <!-- [접기] 기능 단추 -->
+                <button id="btn-collapse-board" onclick="collapseCurationBoard()" class="ml-2 bg-slate-800 text-white hover:bg-red-600 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-sm flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-chevron-up text-[11px]"></i>
+                    <span>접어두기</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 큐레이션 수납 컨테이너 구역 -->
+        <div id="curation-container-wrapper" class="transition-all duration-500 overflow-hidden">
+            <div id="creator-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 동적 카드 렌더링 영역 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 아티스트 상세 및 유튜브 라이브 감상 팝업 모달 -->
+    <div id="creator-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="glass-panel-dark w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl relative transform scale-95 transition-transform duration-300" id="modal-content">
+            <!-- 모달 헤더 -->
+            <div class="p-5 pb-0 flex justify-between items-start">
+                <div>
+                    <span id="modal-category" class="text-[9px] uppercase tracking-widest text-[#8c6d3f] font-bold">Category</span>
+                    <h3 id="modal-name" class="serif-title text-lg font-bold mt-1">크리에이터 채널명</h3>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-all">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            
+            <!-- 콘텐츠 영역 -->
+            <div class="p-5 space-y-4">
+                <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/5 relative">
+                    <iframe id="modal-iframe" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+
+                <div class="space-y-1">
+                    <h4 class="text-[9px] uppercase tracking-wider text-[#8c6d3f] font-extrabold">아티스트 정보 및 감상 하이라이트</h4>
+                    <p id="modal-description" class="text-gray-300 text-xs leading-relaxed">
+                        상세 기획 및 추천 연주 소개가 노출됩니다.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap gap-2 items-center justify-between border-t border-white/10 pt-3">
+                    <div id="modal-tags" class="flex flex-wrap gap-1">
+                        <!-- 동적 키워드 태그 -->
+                    </div>
+                    <span id="modal-subs" class="text-[9px] text-[#8c6d3f] bg-[#8c6d3f]/10 border border-[#8c6d3f]/25 px-2.5 py-0.5 rounded-full font-medium">
+                        구독자 정보
+                    </span>
+                </div>
+            </div>
+
+            <!-- 모달 하단 전용 제어 단추 -->
+            <div class="bg-slate-900/40 px-5 py-3 flex justify-between items-center border-t border-white/5">
+                <button id="modal-btn-background-play" class="flex items-center space-x-1.5 bg-white text-black hover:bg-[#8c6d3f] hover:text-white px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 shadow-md">
+                    <i class="fa-solid fa-circle-play text-[11px]"></i>
+                    <span>이 시그니처 곡 즉시 BGM으로 청음</span>
+                </button>
+                <a id="modal-channel-link" href="#" target="_blank" class="flex items-center space-x-1 text-[#8c6d3f] hover:underline text-xs font-semibold">
+                    <span>유튜브 채널 이동</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 클래식 감성 취향 진단 모달 -->
+    <div id="taste-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative shadow-2xl transform scale-95 transition-transform duration-300" id="taste-content">
+            <button onclick="closeTasteModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black bg-black/5 p-1.5 rounded-full transition-all">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <!-- 퀴즈 홈 -->
+            <div id="taste-intro" class="text-center py-4">
+                <span class="text-3xl">🌿</span>
+                <h3 class="serif-title text-lg font-bold text-slate-800 mt-3 mb-1">나의 클래식 취향 찾기</h3>
+                <p class="text-[11px] text-slate-500 mb-6 leading-relaxed">
+                    지금 이 순간 나를 지탱하고 위로해 줄 악기 음역대와 숨겨진 보석 같은 아티스트 채널을 진밀하게 매칭합니다.
+                </p>
+                <button onclick="startTasteQuiz()" class="bg-[#8c6d3f] hover:bg-slate-800 text-white w-full py-3 rounded-xl font-bold transition-all duration-300 text-xs shadow-md">
+                    취향 매칭 진단 시작
+                </button>
+            </div>
+
+            <!-- 퀴즈 단계 -->
+            <div id="taste-questions" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="quiz-step" class="text-[9px] text-[#8c6d3f] font-bold uppercase tracking-wider">Step 1 of 3</span>
+                    <div class="w-16 h-1 bg-black/10 rounded-full overflow-hidden">
+                        <div id="quiz-progress-bar" class="h-full bg-[#8c6d3f]" style="width: 33%;"></div>
+                    </div>
+                </div>
+                <h4 id="quiz-question-text" class="text-xs font-bold text-slate-800 mb-4 leading-relaxed">질문 내용</h4>
+                <div id="quiz-options" class="space-y-2">
+                    <!-- 동적 바인딩 -->
+                </div>
+            </div>
+
+            <!-- 분석 대기 효과 -->
+            <div id="taste-loading" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#8c6d3f] mb-3"></div>
+                <p class="text-[10px] text-[#8c6d3f] font-semibold tracking-wide">오늘 어울리는 클래식 음역대 분석 중...</p>
+            </div>
+
+            <!-- 매칭 결과 -->
+            <div id="taste-result" class="hidden text-center py-2">
+                <span class="text-[9px] uppercase tracking-[0.2em] text-[#8c6d3f] font-extrabold">Recommended For You</span>
+                <h4 id="result-creator-name" class="serif-title text-xl font-bold text-slate-800 mt-1 mb-3">매칭 아티스트</h4>
+                <div class="w-14 h-14 rounded-full bg-[#8c6d3f]/10 flex items-center justify-center mx-auto mb-4 border border-[#8c6d3f]/20">
+                    <i class="fa-solid fa-volume-high text-xl text-[#8c6d3f]"></i>
+                </div>
+                <p id="result-text" class="text-[11px] text-slate-600 leading-relaxed mb-6">
+                    결과 추천 정보가 들어갑니다.
+                </p>
+                <div class="flex flex-col gap-2">
+                    <button id="btn-play-result" class="bg-slate-800 hover:bg-[#8c6d3f] text-white w-full py-3 rounded-xl font-bold transition-colors text-xs flex items-center justify-center space-x-1.5 shadow-md">
+                        <i class="fa-solid fa-circle-play"></i>
+                        <span>이 추천곡 즉시 감상트랙으로 배경 재생</span>
+                    </button>
+                    <button onclick="closeTasteModal()" class="text-slate-400 hover:text-black text-[9px] underline mt-1">
+                        돌아가기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 커스텀 토스트 알림 메시지 단독 구성 -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-5 py-3 rounded-full text-xs font-semibold shadow-xl opacity-0 translate-y-6 transition-all duration-500 pointer-events-none">
+        안내창 알림
+    </div>
+
+    <!-- 하단 라이선스 및 크레딧 -->
+    <footer class="absolute bottom-0 w-full py-6 text-center border-t border-white/20 text-[10px] text-slate-600 bg-white/30 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-2">
+            <p>© 2026 I AM - Classic Finder. Autoplay Ambience Sync System.</p>
+            <div class="flex space-x-4">
+                <a href="https://youtu.be/VT4Vm2TdJdg" target="_blank" class="hover:text-black transition-colors font-semibold text-[#8c6d3f]">피달소(Pidalso) 공식 채널 바로가기</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 전역 통합 안심 기동 스크립트 블록 -->
+    <script>
+        // 전역 미세 오류 조율용 리스너 (외부 크로스 오리진 Script Error 사전 차단 가드)
+        window.addEventListener('error', function(e) {
+            if (e.message && (e.message === 'Script error.' || e.message.includes('youtube') || e.message.includes('widgetapi'))) {
+                e.preventDefault();
+                return false;
+            }
+        }, true);
+
+        /* ======================================================================
+         * 1. 전역 오디오 노드 및 제어 상태 변수 완전 전역 선언 (ReferenceError 원천 방지)
+         * ====================================================================== */
+        let audioNode = null;
+        let playPromise = null;
+        let activeCategory = null;
+        let quizIndex = 0;
+        let quizAnswers = [];
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isRepeat = false;
+        let isFavorited = false;
+        let isShuffle = true; // 무작위 랜덤 재생 활성화
+        let progressInterval = null;
+
+        // Failsafe 가상 신시사이저 관련 변수 정의
+        let isSynthMode = false;
+        let synthInterval = null;
+        let audioCtx = null;
+        let activeNodes = [];
+        let synthTimeout = null;
+
+        /* ======================================================================
+         * 2. 큐레이션 크리에이터 마스터 데이터 리스트 (악기 종류별 카테고리 복각)
+         * ====================================================================== */
+        const creators = [
+            {
+                id: "pidalso",
+                name: "피달소 (Pidalso)",
+                category: "keyboard", 
+                categoryKo: "건반악기 (피아노)",
+                youtubeUrl: "https://www.youtube.com/@pidalso",
+                embedId: "VT4Vm2TdJdg",
+                audioUrl: "https://actions.google.com/sounds/v1/music/soft_piano.mp3",
+                bgKey: "water", 
+                description: "지브리, 디즈니 명작 애니메이션의 따뜻한 감성들을 유려한 뉴에이지식 클래식 건반 화성으로 재현하여 마음에 진한 평온을 선물하는 아티스트입니다.",
+                subs: "구독자 16만 명",
+                keywords: ["지브리 감성", "뉴에이지 힐링", "빗소리 피아노"]
+            },
+            {
+                id: "towmoo",
+                name: "또모 (TOWMOO)",
+                category: "keyboard", 
+                categoryKo: "건반악기 (피아노)",
+                youtubeUrl: "https://www.youtube.com/@TOWMOO",
+                embedId: "mNlO3L3oK_E",
+                audioUrl: "https://actions.google.com/sounds/v1/music/morning_breeze.mp3",
+                bgKey: "shadow", 
+                description: "예술과 대중을 연결하는 독창적인 다리. 대결형 버스킹이나 음대생 챌린지 등 다양하고 유쾌한 기획으로 클래식 음악을 더 친근하게 풀어주는 종합 연주 채널입니다.",
+                subs: "구독자 61만 명",
+                keywords: ["피아노 버스킹", "클래식 엔터테인먼트", "도전 클래식"]
+            },
+            {
+                id: "yunchanlim",
+                name: "임윤찬 (Lim Yunchan)",
+                category: "keyboard", 
+                categoryKo: "건반악기 (피아노)",
+                youtubeUrl: "https://www.youtube.com/@YunchanLimOfficial",
+                embedId: "a9_SgXbKbyk",
+                audioUrl: "https://actions.google.com/sounds/v1/music/piano_romance.mp3",
+                bgKey: "glisten", 
+                description: "전 세계 음악계를 경이로움에 빠뜨린 젊은 피아니스트. 감탄을 자아내는 강렬하고 심오한 소리의 깊이와 압도적인 기교로 역사를 써 내려가고 있습니다.",
+                subs: "클라이번 최연소 우승자",
+                keywords: ["거장의 쇼팽", "열정의 연주", "세계가 극찬한 감동"]
+            },
+            {
+                id: "dannykoo",
+                name: "대니 구 (Danny Koo)",
+                category: "strings", 
+                categoryKo: "현악기 (바이올린)",
+                youtubeUrl: "https://www.youtube.com/@DannyKooViolin",
+                embedId: "XQ2p3gBwKms",
+                audioUrl: "https://actions.google.com/sounds/v1/music/serenity.mp3",
+                bgKey: "meadow", 
+                description: "경계를 허무는 만능 멀티 아티스트이자 탁월한 바이올리니스트. 밝고 활기 넘치는 소통 방식으로 대중 클래식 무대에 싱그러운 에너지를 전파합니다.",
+                subs: "구독자 10만 명",
+                keywords: ["에너제틱 바이올린", "장르를 넘는 클래식", "인터랙티브 대화"]
+            },
+            {
+                id: "jennyyun",
+                name: "제니윤 (Jenny Yun)",
+                category: "strings", 
+                categoryKo: "현악기 (바이올린)",
+                youtubeUrl: "https://www.youtube.com/@jennyyunviolin",
+                embedId: "A380yZ0V84U",
+                audioUrl: "https://actions.google.com/sounds/v1/music/peaceful_mind.mp3",
+                bgKey: "wave", 
+                description: "클래식 정통 기교뿐 아니라 대중가요 및 퍼포먼스 댄스 편곡까지 가미해 화려하고 역동적으로 귀를 사로잡는 대세 크리에이터입니다.",
+                subs: "구독자 45만 명",
+                keywords: ["K-Pop 퍼포먼스", "현악의 유혹", "초급 바이올린 가이드"]
+            },
+            {
+                id: "cellodeck",
+                name: "첼로댁 (Cellodeck)",
+                category: "strings", 
+                categoryKo: "현악기 (첼로)",
+                youtubeUrl: "https://www.youtube.com/@cellodeck",
+                embedId: "w_Mh0V7u_2I",
+                audioUrl: "https://actions.google.com/sounds/v1/music/serenity.mp3",
+                bgKey: "glisten", 
+                description: "인간의 실제 목소리에 가장 가깝다고 평하는 현악기 첼로. 그윽하고 묵직한 마찰음을 통해 지친 영혼에 깊고 따뜻한 쉼을 내어주는 중저음 스페셜 채널입니다.",
+                subs: "구독자 21만 명",
+                keywords: ["중저음의 안식처", "묵직한 첼로 현", "포근한 감성 힐링"]
+            },
+            {
+                id: "hanyureum",
+                name: "한여름 Flutist",
+                category: "woodwinds", 
+                categoryKo: "관악기 (플루트)",
+                youtubeUrl: "https://www.youtube.com/@yureumflute",
+                embedId: "oX4_A2tE8gQ",
+                audioUrl: "https://actions.google.com/sounds/v1/music/morning_breeze.mp3",
+                bgKey: "forest", 
+                description: "청아하게 불어오는 새벽 숲속의 바람결 같은 플루트 선율. 고운 호흡을 통과해 나오는 투명한 목관의 정수로 마음의 답답함을 싱그럽게 씻어냅니다.",
+                subs: "인기 플루티스트",
+                keywords: ["새벽 플루트", "바람의 숲", "투명한 영혼의 소리"]
+            },
+            {
+                id: "jo-inhyuk",
+                name: "조인혁 Clarinet",
+                category: "woodwinds", 
+                categoryKo: "관악기 (클라리넷)",
+                youtubeUrl: "https://www.youtube.com/@InhyukCho",
+                embedId: "X57eX1T9vOw",
+                audioUrl: "https://actions.google.com/sounds/v1/music/soft_piano.mp3",
+                bgKey: "fireplace", 
+                description: "세계 최고의 무대인 메트로폴리탄 오페라 수석 출신의 연주자. 부드러운 양단 벨벳 천 같은 클라리넷 특유의 깊은 서정성을 고스란히 담아냅니다.",
+                subs: "세계 오페라단 수석",
+                keywords: ["벨벳 오케스트라", "감미로운 클라리넷", "완벽한 호흡"]
+            },
+            {
+                id: "marimbaj",
+                name: "마림바제이 (Marimba J)",
+                category: "percussion", 
+                categoryKo: "타악기 (마림바)",
+                youtubeUrl: "https://www.youtube.com/@MarimbaJ",
+                embedId: "oP7T_tS-S6w",
+                audioUrl: "https://actions.google.com/sounds/v1/music/piano_romance.mp3",
+                bgKey: "sunset", 
+                description: "건반 타악기인 마림바 고유의 맑고 감미로운 나무 울림을 전하는 마림바 아티스트 듀오. 따뜻하고 경쾌한 선율로 일상에 세련된 리듬을 선물합니다.",
+                subs: "구독자 2.4만 명",
+                keywords: ["마림바 앙상블", "맑은 나무 타격음", "감성 퍼커션"]
+            },
+            {
+                id: "spo",
+                name: "서울시립교향악단 (SPO)",
+                category: "orchestra", 
+                categoryKo: "오케스트라 (종합)",
+                youtubeUrl: "https://www.youtube.com/@SPO",
+                embedId: "Z2eE62D-Cms",
+                audioUrl: "https://actions.google.com/sounds/v1/music/serenity.mp3",
+                bgKey: "wave", 
+                description: "수십, 수백 명의 완벽한 계산과 일치된 지휘 봉 끝에서 펼쳐지는 압도적인 소리의 파도. 가슴을 웅장하게 고동치게 만드는 명문 교향악단 공식 채널입니다.",
+                subs: "서울시향 대표 채널",
+                keywords: ["대편성 전율", "마에스트로의 마법", "웅장한 고전 명곡"]
+            }
+        ];
+
+        /* ======================================================================
+         * 3. 감성 오디오 플레이리스트 정의 (Google 공식 무손실 고품질 MP3 연동)
+         * ====================================================================== */
+        const playlist = [
+            {
+                title: "수면의 잔잔한 고요함 (Soft Piano)",
+                artist: "피달소 감성 매칭 01",
+                url: "https://actions.google.com/sounds/v1/music/soft_piano.mp3",
+                bgKey: "water" // 수면의 물결
+            },
+            {
+                title: "새벽 이슬 머금은 숲속 (Morning Breeze)",
+                artist: "피달소 감성 매칭 02",
+                url: "https://actions.google.com/sounds/v1/music/morning_breeze.mp3",
+                bgKey: "forest" // 숲속의 아침
+            },
+            {
+                title: "금빛 물결의 윤슬 아래서 (Serenity)",
+                artist: "피달소 감성 매칭 03",
+                url: "https://actions.google.com/sounds/v1/music/serenity.mp3",
+                bgKey: "glisten" // 물빛 윤슬
+            },
+            {
+                title: "따스한 가을날의 기억 (Piano Romance)",
+                artist: "피달소 감성 매칭 04",
+                url: "https://actions.google.com/sounds/v1/music/piano_romance.mp3",
+                bgKey: "autumn" // 단풍 깃든 가을
+            },
+            {
+                title: "안개 자욱한 호숫가의 사색 (Peaceful Mind)",
+                artist: "피달소 감성 매칭 05",
+                url: "https://actions.google.com/sounds/v1/music/peaceful_mind.mp3",
+                bgKey: "mist" // 안개 수평선
+            }
+        ];
+
+        /* ======================================================================
+         * 4. 13종 대규모 감성 풍경 메타 정보
+         * ====================================================================== */
+        const bgThemes = {
+            water: {
+                img: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1920&q=80",
+                name: "수면의 물결"
+            },
+            wave: {
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
+                name: "아침 파도"
+            },
+            shadow: {
+                img: "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1920&q=80",
+                name: "나뭇잎 그림자"
+            },
+            mist: {
+                img: "https://images.unsplash.com/photo-1495107334309-fcf20504a5ab?auto=format&fit=crop&w=1920&q=80",
+                name: "안개 수평선"
+            },
+            glisten: {
+                img: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1920&q=80",
+                name: "물빛 윤슬"
+            },
+            sunset: {
+                img: "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=1920&q=80",
+                name: "노을 진 강변"
+            },
+            night: {
+                img: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=1920&q=80",
+                name: "밤하늘의 별빛"
+            },
+            forest: {
+                img: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=80",
+                name: "숲속의 아침"
+            },
+            autumn: {
+                img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80",
+                name: "단풍 깃든 가을"
+            },
+            snow: {
+                img: "https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1920&q=80",
+                name: "하얗게 내린 눈"
+            },
+            rain: {
+                img: "https://images.unsplash.com/photo-1428908728789-d2de25dbd4e2?auto=format&fit=crop&w=1920&q=80",
+                name: "창가에 흐르는 빗방울"
+            },
+            meadow: {
+                img: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1920&q=80",
+                name: "푸르른 초원"
+            },
+            fireplace: {
+                img: "https://images.unsplash.com/photo-1545048702-79362596cdc9?auto=format&fit=crop&w=1920&q=80",
+                name: "타오르는 벽난로"
+            }
+        };
+
+        // 취향 진단 데이터 정의
+        const quizQuestions = [
+            {
+                q: "오늘 밤, 지친 나의 마음을 채워줄 가장 어울리는 공기감은?",
+                opts: [
+                    { t: "차분하고 따뜻하며 모든 불빛이 꺼진 고요함", v: "calm" },
+                    { t: "적당한 집중에 도움을 주는 투명하고 이지적인 고독", v: "focus" },
+                    { t: "가슴 한편을 세차게 두드려 줄 감정의 장엄한 폭풍", v: "grand" }
+                ]
+            },
+            {
+                q: "마음에 흘려보냈을 때 가장 편안하게 휘감기는 악기의 울림은?",
+                opts: [
+                    { t: "이슬을 구르는 듯 곱고 선율적인 클래식 피아노 건반", v: "keyboard" },
+                    { t: "섬세한 감정선 하나하나를 자극하는 애절한 현악 바이올린/첼로", v: "strings" },
+                    { t: "영롱하고 따뜻하게 통통 울려퍼지는 맑은 나무 마림바 타악기", v: "percussion" },
+                    { t: "새벽녘 솔바람처럼 청아하고 영롱하게 불어오는 목관 플루트", v: "woodwinds" }
+                ]
+            },
+            {
+                q: "음악을 감상할 때 내가 가장 선호하는 몰입 형태는?",
+                opts: [
+                    { t: "독서나 휴식을 방해하지 않게 뒷배경에 조용히 BGM으로 얹어둘 때", v: "bgm" },
+                    { t: "연주 영상의 독창적인 기획과 함께 직관적이고 가볍게 즐길 때", v: "easy" }
+                ]
+            }
+        ];
+
+        /* ======================================================================
+         * 5. 공통 뷰 헬퍼 및 UI 동기화 모듈 (실시간 알림 및 토스트 배너 완벽 정의)
+         * ====================================================================== */
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.innerText = msg;
+            t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-5 py-3 rounded-full text-xs font-semibold shadow-xl opacity-100 translate-y-0 transition-all duration-500 tracking-wide";
+            
+            setTimeout(() => {
+                t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-5 py-3 rounded-full text-xs font-semibold shadow-xl opacity-0 translate-y-6 transition-all duration-500 pointer-events-none";
+            }, 3000);
+        }
+
+        function changeBackground(themeKey, silent = false) {
+            const theme = bgThemes[themeKey];
+            if (!theme) return;
+
+            const bgElement = document.getElementById('dynamic-bg');
+            if (bgElement) {
+                bgElement.style.backgroundImage = `url('${theme.img}')`;
+            }
+            
+            if (!silent) {
+                showToast(`선율의 무드에 맞춰 배경이 '${theme.name}' 풍경으로 교체되었습니다.`);
+            }
+        }
+
+        function updatePlayButtonUI(playing) {
+            const playIcon = document.getElementById('play-icon');
+            const playBtn = document.getElementById('btn-main-play');
+            if (!playIcon || !playBtn) return;
+            if (playing) {
+                playIcon.className = "fa-solid fa-pause text-[8px]";
+                playBtn.classList.add('bg-[#8c6d3f]');
+                playBtn.classList.remove('bg-slate-800');
+            } else {
+                playIcon.className = "fa-solid fa-play ml-0.5 text-[8px]";
+                playBtn.classList.remove('bg-[#8c6d3f]');
+                playBtn.classList.add('bg-slate-800');
+            }
+        }
+
+        function updatePlayerWidgetInfo() {
+            const track = playlist[currentTrackIndex];
+            const titleEl = document.getElementById('player-title');
+            if (titleEl && track) {
+                titleEl.innerText = track.title;
+            }
+        }
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function resetProgressBar() {
+            const fill = document.getElementById('progress-bar-fill');
+            const thumb = document.getElementById('progress-thumb');
+            const current = document.getElementById('current-time');
+            const remaining = document.getElementById('remaining-time');
+            if (fill) fill.style.width = '0%';
+            if (thumb) thumb.style.left = '0%';
+            if (current) current.innerText = '0:00';
+            if (remaining) remaining.innerText = '-0:00';
+        }
+
+        /* ======================================================================
+         * 6. 오디오 제어 로직 구현 (동적 트랙 라우팅 및 탭 스위처)
+         * ====================================================================== */
+        function loadTrack(index, silentBgChange = true, forcePlay = false) {
+            currentTrackIndex = index;
+            const track = playlist[index];
+            
+            // 신시사이저 모드 비활성화 및 리셋
+            isSynthMode = false;
+            stopSynthMelody();
+
+            if (audioNode) {
+                audioNode.pause();
+                audioNode.src = track.url;
+                audioNode.load();
+            }
+
+            const titleEl = document.getElementById('player-title');
+            if (titleEl && track) titleEl.innerText = track.title;
+            
+            // 음악 매칭 자연 감성 배경 교체
+            changeBackground(track.bgKey || "water", silentBgChange);
+            
+            isFavorited = false;
+            const favBtn = document.getElementById('btn-favorite');
+            if (favBtn) favBtn.className = "text-slate-400 hover:text-red-500 transition-colors";
+            
+            resetProgressBar();
+
+            if (forcePlay || isPlaying) {
+                setTimeout(() => {
+                    safePlay();
+                }, 100);
+            }
+        }
+
+        function safePlay() {
+            if (isSynthMode) {
+                playSynthMelody();
+                isPlaying = true;
+                updatePlayButtonUI(true);
+                return;
+            }
+
+            if (!audioNode || !audioNode.src) return;
+            
+            playPromise = audioNode.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    isPlaying = true;
+                    updatePlayButtonUI(true);
+                }).catch(err => {
+                    if (err.name === "AbortError") {
+                        console.log("Audio playback safely pre-empted by new load request.");
+                    } else {
+                        console.log("Fallback to local procedurally generated synth engine:", err);
+                        fallbackToSynth(true);
+                    }
+                });
+            }
+        }
+
+        function safePause() {
+            if (isSynthMode) {
+                stopSynthMelody();
+                isPlaying = false;
+                updatePlayButtonUI(false);
+                return;
+            }
+
+            if (!audioNode) return;
+
+            if (playPromise !== null) {
+                playPromise.then(() => {
+                    audioNode.pause();
+                    isPlaying = false;
+                    updatePlayButtonUI(false);
+                }).catch(() => {
+                    audioNode.pause();
+                    isPlaying = false;
+                    updatePlayButtonUI(false);
+                });
+            } else {
+                audioNode.pause();
+                isPlaying = false;
+                updatePlayButtonUI(false);
+            }
+        }
+
+        function togglePlayState() {
+            // 브라우저의 오토플레이 제한 정책을 우회하기 위해 사용자 제스처 이벤트 내에서 AudioContext를 즉시 활성화
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error("AudioContext initialization failed: ", e);
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (isPlaying) {
+                safePause();
+            } else {
+                safePlay();
+                showToast("명품 클래식 멜로디 BGM 재생이 시작되었습니다.");
+            }
+        }
+
+        function playNextTrack(autoChange = false) {
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * playlist.length);
+            } else {
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            }
+            loadTrack(currentTrackIndex, autoChange, true);
+        }
+
+        function playPrevTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            loadTrack(currentTrackIndex, false, true);
+        }
+
+        function changeVolume(val) {
+            if (audioNode) {
+                audioNode.volume = val / 100;
+            }
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            const btn = document.getElementById('btn-repeat');
+            if (!btn) return;
+            if (isRepeat) {
+                btn.className = "text-[#8c6d3f] font-bold scale-110";
+                showToast("현재 연주곡 한곡 반복 재생이 활성화되었습니다.");
+            } else {
+                btn.className = "text-slate-400 hover:text-black transition-colors";
+                showToast("반복 감상 모드를 해제했습니다.");
+            }
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('btn-shuffle');
+            if (!btn) return;
+            if (isShuffle) {
+                btn.className = "text-slate-800 font-bold scale-110";
+                showToast("전체 오디오 셔플 무작위 재생이 활성화되었습니다.");
+            } else {
+                btn.className = "text-[#8c6d3f] hover:text-black transition-colors";
+                showToast("순차적인 흐름 배열로 일반 재생합니다.");
+            }
+        }
+
+        function toggleFavorite() {
+            isFavorited = !isFavorited;
+            const btn = document.getElementById('btn-favorite');
+            if (!btn) return;
+            if (isFavorited) {
+                btn.className = "text-red-500 font-bold scale-110";
+                showToast("현재 재생 트랙을 선호 리스트에 추가해 두었습니다.");
+            } else {
+                btn.className = "text-slate-400 hover:text-red-500 transition-colors";
+                showToast("선호 저장 목록에서 제외했습니다.");
+            }
+        }
+
+        function shareCurrentTrack() {
+            const track = playlist[currentTrackIndex];
+            if (!track) return;
+            const dummy = document.createElement("input");
+            document.body.appendChild(dummy);
+            dummy.value = track.url;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+            showToast("선택된 초고속 힐링 음원의 고음질 MP3 다운로드 주소가 복사되었습니다.");
+        }
+
+        /* ======================================================================
+         * 7. Failsafe 로컬 앰비언트 신시사이저 엔진 구현
+         * ====================================================================== */
+        function playSynthMelody() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                const pentatonic = [196.00, 220.00, 246.94, 293.66, 329.63, 392.00, 440.00, 493.88, 587.33, 659.25];
+                const delayNode = audioCtx.createDelay(1.0);
+                delayNode.delayTime.value = 0.45;
+                const feedback = audioCtx.createGain();
+                feedback.gain.value = 0.38;
+                
+                delayNode.connect(feedback);
+                feedback.connect(delayNode);
+                delayNode.connect(audioCtx.destination);
+                
+                function playNote(freq, time) {
+                    if (!isPlaying || !isSynthMode) return;
+                    
+                    const osc = audioCtx.createOscillator();
+                    const overtone = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    osc.type = 'triangle'; 
+                    osc.frequency.setValueAtTime(freq, time);
+                    
+                    overtone.type = 'sine';
+                    overtone.frequency.setValueAtTime(freq * 2, time); 
+                    
+                    gainNode.gain.setValueAtTime(0, time);
+                    gainNode.gain.linearRampToValueAtTime(0.08, time + 0.08); 
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 2.8); 
+                    
+                    osc.connect(gainNode);
+                    overtone.connect(gainNode);
+                    
+                    gainNode.connect(audioCtx.destination);
+                    gainNode.connect(delayNode);
+                    
+                    osc.start(time);
+                    overtone.start(time);
+                    osc.stop(time + 3.5);
+                    overtone.stop(time + 3.5);
+                    
+                    activeNodes.push(osc, overtone, gainNode);
+                }
+                
+                function scheduleNextNote() {
+                    if (!isPlaying || !isSynthMode) return;
+                    const now = audioCtx.currentTime;
+                    const note = pentatonic[Math.floor(Math.random() * pentatonic.length)];
+                    
+                    playNote(note, now);
+                    
+                    const nextDelay = 700 + Math.random() * 1500;
+                    synthTimeout = setTimeout(scheduleNextNote, nextDelay);
+                }
+                
+                stopSynthMelody();
+                scheduleNextNote();
+            } catch(e) {
+                console.error("Synthesizer playback initialization failed: ", e);
+            }
+        }
+
+        function stopSynthMelody() {
+            if (synthTimeout) {
+                clearTimeout(synthTimeout);
+                synthTimeout = null;
+            }
+            activeNodes.forEach(node => {
+                try { node.disconnect(); } catch(e){}
+                try { node.stop(); } catch(e){}
+            });
+            activeNodes = [];
+        }
+
+        function fallbackToSynth(startImmediately = false) {
+            if (isSynthMode) return;
+            isSynthMode = true;
+            
+            const titleEl = document.getElementById('player-title');
+            if (titleEl) titleEl.innerText = "생성형 감성 피아노 클래식 (Failsafe)";
+            
+            showToast("보안 정책 제약으로 인해 생성형 피아노 모드로 자동 안전 복구되었습니다. 우상단 ▶ 버튼을 눌러보세요.");
+            
+            if (startImmediately) {
+                isPlaying = true;
+                updatePlayButtonUI(true);
+                playSynthMelody();
+            } else {
+                isPlaying = false;
+                updatePlayButtonUI(false);
+                stopSynthMelody();
+            }
+        }
+
+        /* ======================================================================
+         * 8. 악기 큐레이션 보드 렌더링 및 필터링 시스템 구현
+         * ====================================================================== */
+        function renderCreators(filter = "all") {
+            const grid = document.getElementById('creator-grid');
+            const collapseBtn = document.getElementById('btn-collapse-board');
+            if (!grid || !collapseBtn) return;
+            
+            grid.classList.remove('hidden');
+            collapseBtn.classList.remove('hidden'); 
+            collapseBtn.classList.add('flex');
+
+            grid.innerHTML = ""; 
+
+            const targetCreators = filter === "all" ? creators : creators.filter(c => c.category === filter);
+
+            targetCreators.forEach(creator => {
+                const card = document.createElement('div');
+                card.className = "glass-panel p-5 rounded-2xl card-focus cursor-pointer flex flex-col justify-between border-white/90";
+                card.onclick = () => openModal(creator);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[9px] uppercase tracking-wider text-[#8c6d3f] bg-[#8c6d3f]/10 border border-[#8c6d3f]/25 px-2.5 py-1 rounded-full font-extrabold">
+                                ${creator.categoryKo}
+                            </span>
+                            <span class="text-[9px] text-slate-500 font-medium">${creator.subs}</span>
+                        </div>
+                        <h3 class="serif-title text-sm font-bold text-slate-800 mb-1.5">${creator.name}</h3>
+                        <p class="text-slate-600 text-[11px] leading-relaxed mb-4 line-clamp-3">
+                            ${creator.description}
+                        </p>
+                    </div>
+                    <div class="border-t border-black/5 pt-3 flex justify-between items-center mt-3">
+                        <div class="flex gap-1 flex-wrap">
+                            ${creator.keywords.map(k => `<span class="text-[8px] bg-black/5 text-slate-700 px-2 py-0.5 rounded">#${k}</span>`).join('')}
+                        </div>
+                        <span class="text-[10px] text-[#8c6d3f] font-bold flex items-center space-x-1">
+                            <span>연주영상 감상</span>
+                            <i class="fa-solid fa-angle-right text-[8px]"></i>
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat, btnElement) {
+            activeCategory = cat;
+            
+            if (!btnElement) {
+                btnElement = document.querySelector(`.category-btn[onclick*="'${cat}'"]`);
+            }
+            
+            const btns = document.querySelectorAll('.category-btn');
+            btns.forEach(btn => {
+                btn.className = "category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm";
+            });
+
+            if (btnElement) {
+                btnElement.className = "category-btn bg-[#8c6d3f] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border border-[#8c6d3f] shadow-md";
+            }
+
+            renderCreators(cat);
+            
+            let catName = "전체";
+            if(cat === 'keyboard') catName = "건반악기";
+            else if(cat === 'strings') catName = "현악기";
+            else if(cat === 'woodwinds') catName = "관악기";
+            else if(cat === 'percussion') catName = "타악기";
+            else if(cat === 'orchestra') catName = "오케스트라";
+            
+            showToast(`아티스트 큐레이션이 [${catName}] 부문 기준으로 화려하게 열렸습니다.`);
+        }
+
+        function collapseCurationBoard() {
+            const grid = document.getElementById('creator-grid');
+            const collapseBtn = document.getElementById('btn-collapse-board');
+            if (!grid || !collapseBtn) return;
+
+            const btns = document.querySelectorAll('.category-btn');
+            btns.forEach(btn => {
+                btn.className = "category-btn bg-white/80 text-slate-700 hover:bg-[#8c6d3f] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border border-black/5 shadow-sm";
+            });
+
+            grid.classList.add('hidden');
+            collapseBtn.classList.add('hidden');
+            collapseBtn.classList.remove('flex');
+
+            activeCategory = null;
+            showToast("악기 큐레이션 보드를 깔끔하게 접어두었습니다.");
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        /* ======================================================================
+         * 9. 아티스트 모달 및 유튜브 연동 팝업 제어
+         * ====================================================================== */
+        function openModal(creator) {
+            const modal = document.getElementById('creator-modal');
+            const content = document.getElementById('modal-content');
+            if (!modal || !content) return;
+            
+            document.getElementById('modal-category').innerText = creator.categoryKo;
+            document.getElementById('modal-name').innerText = creator.name;
+            document.getElementById('modal-description').innerText = creator.description;
+            document.getElementById('modal-subs').innerText = creator.subs;
+            
+            document.getElementById('modal-iframe').src = `https://www.youtube.com/embed/${creator.embedId}?autoplay=1&enablejsapi=1`;
+            document.getElementById('modal-channel-link').href = creator.youtubeUrl;
+
+            const tagsBox = document.getElementById('modal-tags');
+            tagsBox.innerHTML = "";
+            creator.keywords.forEach(kw => {
+                const s = document.createElement('span');
+                s.className = "text-[8px] bg-white/10 text-white/80 border border-white/20 px-2 py-0.5 rounded";
+                s.innerText = `#${kw}`;
+                tagsBox.appendChild(s);
+            });
+
+            const bgPlayBtn = document.getElementById('modal-btn-background-play');
+            bgPlayBtn.onclick = () => {
+                isSynthMode = false;
+                stopSynthMelody();
+
+                if (audioNode) {
+                    const titleEl = document.getElementById('player-title');
+                    if (titleEl) titleEl.innerText = `${creator.name} - 대표곡`;
+                    
+                    audioNode.src = creator.audioUrl;
+                    audioNode.load();
+                    safePlay();
+
+                    changeBackground(creator.bgKey || "water", false);
+                    closeModal();
+                }
+            };
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('creator-modal');
+            const content = document.getElementById('modal-content');
+            if (!modal || !content) return;
+            
+            document.getElementById('modal-iframe').src = ""; 
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        /* ======================================================================
+         * 10. 성향 파인더 진단 시스템 로직
+         * ====================================================================== */
+        function openTasteModal() {
+            const m = document.getElementById('taste-modal');
+            const c = document.getElementById('taste-content');
+            if (!m || !c) return;
+            
+            document.getElementById('taste-intro').classList.remove('hidden');
+            document.getElementById('taste-questions').classList.add('hidden');
+            document.getElementById('taste-loading').classList.add('hidden');
+            document.getElementById('taste-result').classList.add('hidden');
+
+            m.classList.remove('hidden');
+            setTimeout(() => {
+                c.classList.remove('scale-95');
+                c.classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeTasteModal() {
+            const m = document.getElementById('taste-modal');
+            const c = document.getElementById('taste-content');
+            if (!m || !c) return;
+            
+            c.classList.remove('scale-100');
+            c.classList.add('scale-95');
+            setTimeout(() => {
+                m.classList.add('hidden');
+            }, 150);
+        }
+
+        function startTasteQuiz() {
+            quizIndex = 0;
+            quizAnswers = [];
+            document.getElementById('taste-intro').classList.add('hidden');
+            document.getElementById('taste-questions').classList.remove('hidden');
+            loadQuizStep();
+        }
+
+        function loadQuizStep() {
+            if (quizIndex >= quizQuestions.length) {
+                analyzeTasteResult();
+                return;
+            }
+
+            const stepData = quizQuestions[quizIndex];
+            document.getElementById('quiz-step').innerText = `Step ${quizIndex + 1} of ${quizQuestions.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((quizIndex + 1) / quizQuestions.length) * 100}%`;
+            document.getElementById('quiz-question-text').innerText = stepData.q;
+
+            const opts = document.getElementById('quiz-options');
+            opts.innerHTML = "";
+
+            stepData.opts.forEach(o => {
+                const b = document.createElement('button');
+                b.className = "w-full text-left bg-white/80 hover:bg-[#8c6d3f] hover:text-white text-slate-800 border border-black/5 p-3.5 rounded-xl text-xs font-semibold transition-all duration-300 shadow-sm";
+                b.innerText = o.t;
+                b.onclick = () => {
+                    quizAnswers.push(o.v);
+                    quizIndex++;
+                    loadQuizStep();
+                };
+                opts.appendChild(b);
+            });
+        }
+
+        function analyzeTasteResult() {
+            document.getElementById('taste-questions').classList.add('hidden');
+            document.getElementById('taste-loading').classList.remove('hidden');
+
+            setTimeout(() => {
+                document.getElementById('taste-loading').classList.add('hidden');
+                document.getElementById('taste-result').classList.remove('hidden');
+
+                const q1 = quizAnswers[0];
+                const q2 = quizAnswers[1];
+                const q3 = quizAnswers[2];
+
+                let target = creators[0]; 
+
+                if (q2 === "keyboard" && q3 === "easy") {
+                    target = creators.find(c => c.id === "towmoo") || creators[0];
+                } else if (q2 === "keyboard" && q1 === "grand") {
+                    target = creators.find(c => c.id === "yunchanlim") || creators[0];
+                } else if (q2 === "strings" && q3 === "easy") {
+                    target = creators.find(c => c.id === "jennyyun") || creators[3];
+                } else if (q2 === "strings") {
+                    target = creators.find(c => c.id === "dannykoo") || creators[3];
+                } else if (q2 === "percussion") {
+                    target = creators.find(c => c.id === "marimbaj") || creators[8];
+                } else if (q2 === "woodwinds") {
+                    target = creators.find(c => c.id === "hanyureum") || creators[6];
+                }
+
+                document.getElementById('result-creator-name').innerText = target.name;
+                document.getElementById('result-text').innerText = `오늘 당신의 감정 주파수는 '${target.categoryKo}' 부문의 ${target.name} 아티스트와 일치합니다. 편안하고 정교한 소리의 흐름에 몸을 맡겨 보세요.`;
+
+                const resBtn = document.getElementById('btn-play-result');
+                resBtn.onclick = () => {
+                    isSynthMode = false;
+                    stopSynthMelody();
+
+                    if (audioNode) {
+                        const titleEl = document.getElementById('player-title');
+                        if (titleEl) titleEl.innerText = `${target.name} - 진단 명곡`;
+                        audioNode.src = target.audioUrl;
+                        audioNode.load();
+                        safePlay();
+                        
+                        changeBackground(target.bgKey || "water", false);
+                        closeTasteModal();
+                    }
+                };
+
+            }, 1300);
+        }
+
+        /* ======================================================================
+         * 11. 초기 구동 적재 및 리스너 등록 통합
+         * ====================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            // 전역 네이티브 오디오 노드 명확하게 탐색 및 정의
+            audioNode = document.getElementById('native-audio');
+
+            if (audioNode) {
+                audioNode.volume = 0.6;
+
+                // HTML5 오디오의 기본 이벤트 리스너 등록
+                audioNode.addEventListener('timeupdate', () => {
+                    if (isSynthMode) return; 
+
+                    const cur = audioNode.currentTime;
+                    const dur = audioNode.duration || 0;
+                    if (dur === 0) return;
+
+                    const percent = (cur / dur) * 100;
+                    const fill = document.getElementById('progress-bar-fill');
+                    const thumb = document.getElementById('progress-thumb');
+                    const current = document.getElementById('current-time');
+                    const remaining = document.getElementById('remaining-time');
+
+                    if (fill) fill.style.width = `${percent}%`;
+                    if (thumb) thumb.style.left = `${percent}%`;
+                    if (current) current.innerText = formatTime(cur);
+                    
+                    const rem = dur - cur;
+                    if (remaining) remaining.innerText = `-${formatTime(rem)}`;
+                });
+
+                audioNode.addEventListener('ended', () => {
+                    if (isRepeat) {
+                        audioNode.currentTime = 0;
+                        safePlay();
+                    } else {
+                        playNextTrack(true); 
+                    }
+                });
+
+                audioNode.addEventListener('error', (e) => {
+                    console.log("Audio load error, failing over to synthesizer safely:", e);
+                    fallbackToSynth(isPlaying);
+                });
+            }
+            
+            // 첫 화면 로드 시 'keyboard(건반악기)' 목록을 기본 활성화
+            filterCategory('keyboard');
+            
+            // 첫 번째 트랙 기본 설정
+            loadTrack(0, true, false); 
+        });
+    </script>
+</body>
+</html>
